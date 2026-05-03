@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>MatLogg</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MatLogg">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjM4IiBmaWxsPSIjMGEwYTBhIi8+PHRleHQgeD0iOTAiIHk9IjEwNSIgZm9udC1zaXplPSI4MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNlcmlmIj7wn42xPC90ZXh0Pjx0ZXh0IHg9IjkwIiB5PSIxNTYiIGZvbnQtc2l6ZT0iMjIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNiOGY5N2EiIGZvbnQtZmFtaWx5PSJtb25vc3BhY2UiIGZvbnQtd2VpZ2h0PSI3MDAiPk1BVExPR0c8L3RleHQ+PC9zdmc+">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zxing-js/0.21.1/zxing.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@700&display=swap');
+:root{
+  --bg:#0a0a0a;--surface:#141414;--surface2:#1e1e1e;--border:#2a2a2a;
+  --green:#b8f97a;--text:#f0f0f0;--muted:#666;--red:#ff6b6b;
+  --blue:#7eb8f9;--orange:#f9c97e;--purple:#c4a7f7;--teal:#7af9e0;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;}
+html{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;height:100%;overflow:hidden;position:fixed;width:100%;}
+#app-root{position:fixed;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:none;padding-bottom:env(safe-area-inset-bottom);}
+
+/* HEADER */
+.header{padding-top:calc(14px + env(safe-area-inset-top));padding-left:20px;padding-right:20px;padding-bottom:12px;background:var(--bg);position:sticky;top:0;z-index:10;border-bottom:1px solid var(--border);}
+.header-row{display:flex;align-items:center;justify-content:space-between;}
+.logo{font-family:'Space Mono',monospace;font-size:20px;color:var(--green);font-weight:700;letter-spacing:-0.5px;}
+.header-actions{display:flex;gap:8px;}
+.hbtn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:7px 13px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;}
+.hbtn.green{border-color:rgba(184,249,122,0.3);color:var(--green);}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:calc(58px + env(safe-area-inset-top));z-index:9;}
+.tab{flex:1;padding:11px 4px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--muted);background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all 0.15s;}
+.tab.active{color:var(--green);border-bottom-color:var(--green);}
+
+/* DATE NAV */
+.date-nav{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface);}
+.dnbtn{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;width:42px;height:42px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.1s;}
+.dnbtn:active{transform:scale(0.92);background:var(--border);}
+.dnbtn:disabled{opacity:0.3;cursor:default;}
+.date-center{text-align:center;flex:1;cursor:pointer;padding:3px 0;}
+.date-lbl{font-family:'Space Mono',monospace;font-size:14px;font-weight:700;}
+.date-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.today-badge{display:inline-block;background:rgba(184,249,122,0.15);border:1px solid rgba(184,249,122,0.3);border-radius:20px;padding:2px 8px;font-size:9px;color:var(--green);font-weight:700;margin-top:2px;}
+
+/* RING */
+.ring-section{padding:16px 20px 0;display:flex;align-items:center;gap:14px;}
+.ring-wrap{position:relative;width:88px;height:88px;flex-shrink:0;}
+.ring-svg{transform:rotate(-90deg);}
+.ring-bg{fill:none;stroke:var(--surface2);stroke-width:8;}
+.ring-fill{fill:none;stroke:var(--green);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset 0.6s cubic-bezier(0.4,0,0.2,1);}
+.ring-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
+.ring-kcal{font-family:'Space Mono',monospace;font-size:15px;font-weight:700;color:var(--green);line-height:1;}
+.ring-unit{font-size:9px;color:var(--muted);}
+.ring-info h2{font-size:14px;font-weight:600;}
+.ring-info p{font-size:12px;color:var(--muted);margin-top:3px;}
+.ring-goal-edit{font-size:11px;color:var(--green);margin-top:5px;cursor:pointer;display:inline-block;padding:4px 0;}
+
+/* MACROS */
+.macros{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:10px 20px 14px;}
+.mc{background:var(--surface);border-radius:11px;padding:9px 8px;border:1px solid var(--border);}
+.mc-label{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+.mc-val{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;margin-top:2px;}
+.mc.p .mc-val{color:var(--blue);}.mc.k .mc-val{color:var(--orange);}.mc.f .mc-val{color:var(--red);}.mc.v .mc-val{color:var(--teal);}
+.mc-bar-bg{height:3px;background:var(--surface2);border-radius:2px;margin-top:5px;}
+.mc-bar{height:3px;border-radius:2px;transition:width 0.5s ease;}
+.mc.p .mc-bar{background:var(--blue);}.mc.k .mc-bar{background:var(--orange);}.mc.f .mc-bar{background:var(--red);}.mc.v .mc-bar{background:var(--teal);}
+
+/* ACTION BUTTONS */
+.action-row{display:flex;gap:8px;margin:0 20px 14px;}
+.btn-scan{flex:1.4;background:var(--green);color:#0a0a0a;border:none;border-radius:13px;padding:15px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s;min-height:50px;}
+.btn-scan:active{transform:scale(0.97);opacity:0.85;}
+.btn-ai{flex:1;background:var(--surface);border:1px solid var(--purple);color:var(--purple);border-radius:13px;padding:15px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all 0.15s;min-height:50px;}
+.btn-ai:active{transform:scale(0.97);opacity:0.85;}
+.btn-edit{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:13px;padding:15px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;width:50px;flex-shrink:0;min-height:50px;}
+
+/* SEARCH */
+.search-wrap{margin:0 20px 12px;}
+.search-input-row{display:flex;gap:8px;}
+.search-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;padding:11px 14px;outline:none;}
+.search-input:focus{border-color:rgba(184,249,122,0.4);}
+.search-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:8px 6px;}
+.search-results{background:var(--surface);border:1px solid var(--border);border-radius:11px;overflow:hidden;margin-top:6px;}
+.sr-item{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer;gap:10px;}
+.sr-item:last-child{border-bottom:none;}
+.sr-item:active{background:var(--surface2);}
+.sr-emoji{font-size:18px;width:28px;text-align:center;flex-shrink:0;}
+.sr-info{flex:1;min-width:0;}
+.sr-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sr-sub{font-size:10px;color:var(--muted);margin-top:1px;}
+.sr-kcal{font-family:'Space Mono',monospace;font-size:11px;color:var(--green);font-weight:700;white-space:nowrap;}
+.ai-badge-sm{font-size:9px;color:var(--purple);background:rgba(196,167,247,0.15);border-radius:4px;padding:1px 5px;font-weight:700;}
+.kassal-badge{font-size:9px;color:var(--teal);background:rgba(122,249,224,0.12);border-radius:4px;padding:1px 5px;font-weight:700;}
+.sr-searching{padding:12px 14px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);}
+.dot{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--green);animation:blink 1.2s infinite;}
+.dot:nth-child(2){animation-delay:0.2s;}.dot:nth-child(3){animation-delay:0.4s;}
+@keyframes blink{0%,80%,100%{opacity:0.3}40%{opacity:1}}
+
+/* LOG */
+.log-section{padding:0 20px 50px;}
+.meal-group{margin-bottom:18px;}
+.mg-header{display:flex;align-items:center;gap:7px;padding:8px 0 6px;border-bottom:1px solid var(--border);margin-bottom:7px;}
+.mg-icon{font-size:16px;}
+.mg-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);}
+.mg-kcal{margin-left:auto;font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);}
+.log-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 13px;margin-bottom:7px;display:flex;align-items:center;gap:9px;animation:slideIn 0.2s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.li-icon{width:36px;height:36px;background:var(--surface2);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;position:relative;}
+.li-src{position:absolute;bottom:1px;right:1px;font-size:8px;}
+.li-details{flex:1;min-width:0;}
+.li-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.li-meta{font-size:10px;color:var(--muted);margin-top:2px;}
+.li-kcal{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--green);white-space:nowrap;}
+.li-del{background:none;border:none;color:var(--muted);cursor:pointer;padding:8px 4px;font-size:14px;min-width:32px;}
+.log-empty-day{text-align:center;color:var(--muted);padding:36px 0;font-size:13px;line-height:1.9;}
+
+/* SCAN OVERLAY */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:100;flex-direction:column;}
+.overlay.active{display:flex;}
+.camera-container{flex:1;position:relative;overflow:hidden;background:#000;}
+#video{width:100%;height:100%;object-fit:cover;}
+.scan-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);width:70vw;height:110px;}
+.sc{position:absolute;width:20px;height:20px;border-color:var(--green);border-style:solid;}
+.sc.tl{top:0;left:0;border-width:3px 0 0 3px;}.sc.tr{top:0;right:0;border-width:3px 3px 0 0;}
+.sc.bl{bottom:0;left:0;border-width:0 0 3px 3px;}.sc.br{bottom:0;right:0;border-width:0 3px 3px 0;}
+.scan-line{position:absolute;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent);animation:scanMove 1.8s ease-in-out infinite;}
+@keyframes scanMove{0%{top:0}50%{top:calc(100% - 2px)}100%{top:0}}
+.scan-hint{position:absolute;bottom:26%;width:100%;text-align:center;color:rgba(255,255,255,0.5);font-size:12px;}
+.close-btn{position:absolute;top:calc(16px + env(safe-area-inset-top));right:16px;background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.2);color:white;border-radius:50%;width:44px;height:44px;font-size:17px;cursor:pointer;z-index:10;display:flex;align-items:center;justify-content:center;}
+.scan-result-area{flex-shrink:0;}
+
+/* SHEETS */
+.result-sheet{background:var(--surface);border-radius:26px 26px 0 0;padding:22px 20px calc(36px + env(safe-area-inset-bottom));max-height:65vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.sheet-handle{width:32px;height:3px;background:var(--border);border-radius:2px;margin:0 auto 18px;}
+.product-img{width:64px;height:64px;object-fit:contain;border-radius:10px;background:var(--surface2);border:1px solid var(--border);flex-shrink:0;}
+.product-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.product-name{font-size:16px;font-weight:700;}
+.product-brand{font-size:11px;color:var(--muted);margin-top:2px;}
+.product-store{font-size:10px;color:var(--teal);margin-top:2px;}
+.res-macros{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px;}
+.rm{background:var(--surface2);border-radius:9px;padding:8px 4px;text-align:center;}
+.rm-val{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;}
+.rm-lbl{font-size:8px;color:var(--muted);margin-top:1px;text-transform:uppercase;}
+.rm:nth-child(1) .rm-val{color:var(--green);}.rm:nth-child(2) .rm-val{color:var(--blue);}
+.rm:nth-child(3) .rm-val{color:var(--orange);}.rm:nth-child(4) .rm-val{color:var(--red);}.rm:nth-child(5) .rm-val{color:var(--teal);}
+.portion-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.portion-lbl{font-size:12px;color:var(--muted);}
+.portion-input{background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:'Space Mono',monospace;font-size:16px;font-weight:700;padding:10px 13px;width:80px;text-align:center;outline:none;}
+.portion-input:focus{border-color:rgba(184,249,122,0.4);}
+.add-btn{background:var(--green);color:#0a0a0a;border:none;border-radius:13px;padding:15px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;width:100%;cursor:pointer;transition:all 0.15s;margin-top:4px;min-height:52px;}
+.add-btn:active{transform:scale(0.97);opacity:0.85;}
+.loading-sheet{background:var(--surface);border-radius:26px 26px 0 0;padding:36px 20px calc(36px + env(safe-area-inset-bottom));text-align:center;}
+.spinner{width:28px;height:28px;border:3px solid var(--surface2);border-top-color:var(--green);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.retry-btn{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:12px;padding:14px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;width:100%;cursor:pointer;margin-top:10px;min-height:50px;}
+.manual-barcode-row{display:flex;gap:8px;margin-top:12px;}
+.manual-bc-input{background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:'Space Mono',monospace;font-size:14px;padding:12px;flex:1;outline:none;}
+.manual-bc-btn{background:var(--green);color:#0a0a0a;border:none;border-radius:9px;padding:12px 16px;font-weight:700;font-size:13px;cursor:pointer;}
+
+/* MEAL PICKER */
+.meal-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:16px;}
+.mp-btn{background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:12px 6px;cursor:pointer;text-align:center;transition:all 0.15s;font-family:'DM Sans',sans-serif;min-height:70px;}
+.mp-btn.selected{border-color:var(--green);background:rgba(184,249,122,0.08);}
+.mp-btn:active{transform:scale(0.96);}
+.mp-icon{font-size:20px;display:block;margin-bottom:3px;}
+.mp-lbl{font-size:11px;font-weight:700;color:var(--text);}
+.mp-time{font-size:9px;color:var(--muted);margin-top:1px;}
+
+/* MODALS */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;align-items:flex-end;}
+.modal.active{display:flex;}
+.modal-sheet{background:var(--surface);border-radius:26px 26px 0 0;padding:22px 20px calc(48px + env(safe-area-inset-bottom));width:100%;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.modal-sheet h3{font-size:15px;font-weight:700;margin-bottom:18px;}
+.field-group{margin-bottom:13px;}
+.field-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;display:block;}
+.field-input{background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;padding:13px;width:100%;outline:none;}
+.field-input:focus{border-color:rgba(184,249,122,0.4);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px;}
+.modal-input{background:var(--surface2);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:'Space Mono',monospace;font-size:20px;font-weight:700;padding:11px 15px;flex:1;text-align:center;outline:none;}
+.modal-input:focus{border-color:rgba(184,249,122,0.4);}
+.modal-input-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+
+/* DRINK ITEM CARD */
+.drink-item-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.drink-fav-btn{background:none;border:none;font-size:18px;cursor:pointer;padding:4px;opacity:0.4;transition:opacity 0.15s,transform 0.15s;}
+.drink-fav-btn.active{opacity:1;}
+.drink-fav-btn:active{transform:scale(1.3);}
+
+/* WEIGHT TAB */
+.weight-page{padding:18px 20px 60px;}
+.w-hero{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px;}
+.w-hero-row{display:flex;justify-content:space-between;align-items:flex-end;}
+.w-current{font-family:'Space Mono',monospace;font-size:34px;font-weight:700;color:var(--green);line-height:1;}
+.w-current span{font-size:15px;color:var(--muted);}
+.w-change-val{font-family:'Space Mono',monospace;font-size:17px;font-weight:700;}
+.w-change-lbl{font-size:10px;color:var(--muted);margin-top:2px;text-align:right;}
+.w-goal-row{display:flex;justify-content:space-between;align-items:center;margin-top:13px;padding-top:13px;border-top:1px solid var(--border);}
+.w-goal-lbl{font-size:11px;color:var(--muted);}
+.w-goal-val{font-family:'Space Mono',monospace;font-size:13px;}
+.w-edit{font-size:11px;color:var(--green);cursor:pointer;}
+.bmi-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:15px;margin-bottom:14px;}
+.bmi-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:13px;}
+.bmi-val{font-family:'Space Mono',monospace;font-size:30px;font-weight:700;line-height:1;}
+.bmi-cat{font-size:12px;font-weight:700;margin-top:3px;}
+.bmi-right{text-align:right;}
+.bmi-h-lbl{font-size:10px;color:var(--muted);}
+.bmi-h-val{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;margin-top:2px;}
+.bmi-edit{font-size:10px;color:var(--green);cursor:pointer;margin-top:3px;display:block;}
+.bmi-scale{position:relative;height:9px;border-radius:5px;margin-bottom:7px;background:linear-gradient(90deg,#7eb8f9 0%,#b8f97a 25%,#f9c97e 55%,#ff6b6b 80%,#c4a7f7 100%);overflow:hidden;}
+.bmi-marker{position:absolute;top:-3px;width:4px;height:15px;background:white;border-radius:2px;transform:translateX(-50%);transition:left 0.5s ease;}
+.bmi-labels{display:flex;justify-content:space-between;font-size:8px;color:var(--muted);}
+.bmi-no-h{text-align:center;font-size:12px;color:var(--muted);padding:8px 0;}
+.w-input-section{background:var(--surface);border:1px solid rgba(184,249,122,0.25);border-radius:16px;padding:15px;margin-bottom:14px;}
+.w-input-lbl{font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;font-weight:700;}
+.w-input-row{display:flex;align-items:center;gap:8px;}
+.w-val-wrap{flex:1;position:relative;}
+.w-val-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Space Mono',monospace;font-size:22px;font-weight:700;padding:12px 38px 12px 16px;text-align:center;outline:none;}
+.w-val-input:focus{border-color:rgba(184,249,122,0.4);}
+.w-unit{position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);pointer-events:none;}
+.w-log-btn{background:var(--green);color:#0a0a0a;border:none;border-radius:12px;padding:12px 18px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;min-height:50px;}
+.graph-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:15px;margin-bottom:14px;}
+.graph-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;}
+.progress-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:15px;margin-bottom:14px;}
+.prog-label{display:flex;justify-content:space-between;margin-bottom:9px;}
+.prog-label span{font-size:11px;color:var(--muted);}
+.prog-label strong{font-size:11px;color:var(--green);}
+.prog-bg{height:7px;background:var(--surface2);border-radius:4px;}
+.prog-bar{height:7px;border-radius:4px;background:linear-gradient(90deg,var(--green),var(--blue));transition:width 0.6s ease;}
+.section-header{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:9px;}
+.log-empty-s{text-align:center;color:var(--muted);padding:24px 0;font-size:12px;line-height:1.8;}
+
+/* EXPORT */
+.export-sheet{background:var(--surface);border-radius:26px 26px 0 0;padding:22px 20px calc(48px + env(safe-area-inset-bottom));width:100%;}
+.export-opt{background:var(--surface2);border:1px solid var(--border);border-radius:13px;padding:15px;cursor:pointer;display:flex;align-items:center;gap:12px;margin-bottom:9px;min-height:62px;}
+.export-opt:active{opacity:0.7;}
+.exp-icon{font-size:22px;flex-shrink:0;}
+.exp-title{font-size:13px;font-weight:600;}
+.exp-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+
+#toast{display:none;position:fixed;bottom:calc(30px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--green);color:#0a0a0a;padding:12px 22px;border-radius:50px;font-weight:700;font-size:13px;z-index:999;white-space:nowrap;}
+input[type="text"],input[type="number"],input[type="password"]{font-size:16px!important;}
+.modal-input,.w-val-input{font-size:20px!important;}
+</style>
+</head>
+<body>
+<div id="app-root">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-row">
+    <div class="logo">MATLOGG</div>
+    <div class="header-actions">
+      <button class="hbtn green" onclick="openExport()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Eksporter
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="showTab('mat')">🍽 Mat</button>
+  <button class="tab" onclick="showTab('drikke')">💧 Drikke</button>
+  <button class="tab" onclick="showTab('vekt')">⚖️ Vekt</button>
+</div>
+
+<!-- ======================== MAT TAB ======================== -->
+<div id="tab-mat">
+  <div class="date-nav">
+    <button class="dnbtn" id="btn-prev" onclick="changeDay(-1)">‹</button>
+    <div class="date-center" onclick="goToday()">
+      <div class="date-lbl" id="date-lbl">–</div>
+      <div class="date-sub" id="date-sub">–</div>
+      <div id="today-badge" style="display:none"><span class="today-badge">I DAG</span></div>
+    </div>
+    <button class="dnbtn" id="btn-next" onclick="changeDay(1)" disabled>›</button>
+  </div>
+
+
+  <div class="ring-section">
+    <div class="ring-wrap">
+      <svg class="ring-svg" viewBox="0 0 100 100" width="88" height="88">
+        <circle class="ring-bg" cx="50" cy="50" r="40"/>
+        <circle class="ring-fill" id="ring-fill" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+      </svg>
+      <div class="ring-label"><div class="ring-kcal" id="ring-kcal">0</div><div class="ring-unit">kcal</div></div>
+    </div>
+    <div class="ring-info">
+      <h2 id="ring-title">Spist i dag</h2>
+      <p id="remaining-text">0 av 2000 kcal</p>
+      <span class="ring-goal-edit" onclick="openKcalGoal()">✏️ Endre mål</span>
+    </div>
+  </div>
+
+  <div class="macros">
+    <div class="mc p"><div class="mc-label">Protein</div><div class="mc-val" id="m-p">0g</div><div class="mc-bar-bg"><div class="mc-bar" id="b-p" style="width:0%"></div></div></div>
+    <div class="mc k"><div class="mc-label">Karbo</div><div class="mc-val" id="m-k">0g</div><div class="mc-bar-bg"><div class="mc-bar" id="b-k" style="width:0%"></div></div></div>
+    <div class="mc f"><div class="mc-label">Fett</div><div class="mc-val" id="m-f">0g</div><div class="mc-bar-bg"><div class="mc-bar" id="b-f" style="width:0%"></div></div></div>
+    <div class="mc v"><div class="mc-label">Vann</div><div class="mc-val" id="m-v">0ml</div><div class="mc-bar-bg"><div class="mc-bar" id="b-v" style="width:0%"></div></div></div>
+  </div>
+
+  <div class="action-row" id="mat-actions">
+    <button class="btn-scan" onclick="startScan()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="3" x2="8" y2="21"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="16" y1="3" x2="16" y2="21"/></svg>
+      Skann strekkode
+    </button>
+    <button class="btn-ai" onclick="toggleSearch()">✦ AI-søk</button>
+    <button class="btn-edit" onclick="openManual()" title="Manuelt">✏️</button>
+  </div>
+
+  <div id="search-wrap" style="display:none" class="search-wrap">
+    <div class="search-input-row">
+      <input type="text" class="search-input" id="search-input" placeholder="Søk etter mat eller beskriv…" oninput="onSearch()" autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="search-close" onclick="closeSearch()">✕</button>
+    </div>
+    <div id="search-results"></div>
+  </div>
+
+  <div class="log-section" id="log-section"></div>
+</div>
+
+<!-- ======================== DRIKKE TAB ======================== -->
+<div id="tab-drikke" style="display:none">
+  <div class="date-nav">
+    <button class="dnbtn" onclick="changeDay(-1)">‹</button>
+    <div class="date-center" onclick="goToday()">
+      <div class="date-lbl" id="drink-date-lbl">–</div>
+      <div class="date-sub" id="drink-date-sub">–</div>
+    </div>
+    <button class="dnbtn" id="drink-btn-next" onclick="changeDay(1)" disabled>›</button>
+  </div>
+
+  <!-- Water ring -->
+  <div class="ring-section" style="padding-top:16px;">
+    <div class="ring-wrap">
+      <svg class="ring-svg" viewBox="0 0 100 100" width="88" height="88">
+        <circle class="ring-bg" cx="50" cy="50" r="40"/>
+        <circle class="ring-fill" id="water-ring-fill" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2" style="stroke:var(--teal)"/>
+      </svg>
+      <div class="ring-label"><div class="ring-kcal" id="water-ml" style="color:var(--teal)">0</div><div class="ring-unit">ml</div></div>
+    </div>
+    <div class="ring-info">
+      <h2>Drikke i dag</h2>
+      <p id="water-remaining-text">0 av 2500 ml</p>
+      <span class="ring-goal-edit" onclick="openWaterGoal()" style="color:var(--teal)">✏️ Endre mål</span>
+    </div>
+  </div>
+
+  <!-- Favoritter (quick add) -->
+  <div style="padding:14px 20px 0;">
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;font-weight:700;">⭐ Favoritter</div>
+    <div id="fav-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;"></div>
+    <div id="fav-empty" style="display:none;font-size:12px;color:var(--muted);padding:10px 0;">Merk drikke som favoritt (⭐) for å vise den her</div>
+  </div>
+
+  <!-- Legg til + skann -->
+  <div style="padding:14px 20px 0;">
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;font-weight:700;">➕ Legg til</div>
+    <div class="action-row" style="margin:0 0 0;">
+      <button class="btn-scan" onclick="startScanDrink()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="3" x2="8" y2="21"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="16" y1="3" x2="16" y2="21"/></svg>
+        Skann drikke
+      </button>
+      <button class="btn-edit" onclick="openDrinkCreate()" style="flex:1;width:auto;" title="Ny drikke">＋ Ny drikke</button>
+    </div>
+  </div>
+
+  <!-- Mine drikker -->
+  <div style="padding:14px 20px 0;">
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;font-weight:700;">🥤 Mine drikker</div>
+    <div id="custom-drinks-list"></div>
+  </div>
+
+  <!-- Dagens logg -->
+  <div style="padding:14px 20px 50px;">
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;font-weight:700;">📋 Logg i dag</div>
+    <div id="drink-log-section"></div>
+  </div>
+</div>
+
+<!-- ======================== VEKT TAB ======================== -->
+<div id="tab-vekt" style="display:none">
+  <div class="weight-page">
+    <div class="w-hero">
+      <div class="w-hero-row">
+        <div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px;">Siste måling</div>
+          <div class="w-current" id="w-current">–<span> kg</span></div>
+        </div>
+        <div><div class="w-change-val" id="w-change">–</div><div class="w-change-lbl">siden start</div></div>
+      </div>
+      <div class="w-goal-row">
+        <div><div class="w-goal-lbl">Målvekt</div><div class="w-goal-val" id="w-goal-display">ikke satt</div></div>
+        <span class="w-edit" onclick="openWGoal()">✏️ Sett mål</span>
+      </div>
+    </div>
+    <div class="bmi-card"><div id="bmi-content"><div class="bmi-no-h">Legg inn høyde for å beregne BMI<br><span style="color:var(--green);cursor:pointer;font-size:11px" onclick="openHeight()">✏️ Legg inn høyde</span></div></div></div>
+    <div id="prog-section" style="display:none" class="progress-section">
+      <div class="prog-label"><span id="p-start">–</span><strong id="p-pct">0%</strong><span id="p-goal-lbl">–</span></div>
+      <div class="prog-bg"><div class="prog-bar" id="p-bar" style="width:0%"></div></div>
+    </div>
+    <div class="w-input-section">
+      <div class="w-input-lbl">⚖️ Hva veier du nå?</div>
+      <div class="w-input-row">
+        <div class="w-val-wrap"><input id="w-val" type="number" inputmode="decimal" step="0.1" placeholder="84.5" class="w-val-input" autocomplete="off"><span class="w-unit">kg</span></div>
+        <button onclick="addWeight()" class="w-log-btn">Logg</button>
+      </div>
+    </div>
+    <div class="graph-card"><div class="graph-title">Vektutvikling</div><canvas id="w-canvas" height="130" style="width:100%;display:block"></canvas></div>
+    <div class="section-header">Historikk</div>
+    <div id="w-log-list"><div class="log-empty-s">⚖️ Ingen målinger ennå</div></div>
+  </div>
+</div>
+
+</div><!-- end app-root -->
+
+<!-- SCAN OVERLAY -->
+<div class="overlay" id="scan-overlay">
+  <button class="close-btn" onclick="stopScan()">✕</button>
+  <div class="camera-container">
+    <video id="video" playsinline muted autoplay></video>
+    <div class="scan-frame">
+      <div class="sc tl"></div><div class="sc tr"></div>
+      <div class="sc bl"></div><div class="sc br"></div>
+      <div class="scan-line"></div>
+    </div>
+    <div class="scan-hint">Hold strekkoden innenfor rammen</div>
+  </div>
+  <div id="scan-result-area" class="scan-result-area"></div>
+</div>
+
+<!-- PORTION MODAL (for search results) -->
+<div class="modal" id="portion-modal">
+  <div class="modal-sheet">
+    <div class="sheet-handle"></div>
+    <div class="product-header" id="pm-header">
+      <div><div class="product-name" id="pm-name">–</div><div class="product-brand" id="pm-brand"></div><div class="product-store" id="pm-store"></div></div>
+    </div>
+    <div class="res-macros">
+      <div class="rm"><div class="rm-val" id="pm-kcal">0</div><div class="rm-lbl">kcal</div></div>
+      <div class="rm"><div class="rm-val" id="pm-prot">0g</div><div class="rm-lbl">Protein</div></div>
+      <div class="rm"><div class="rm-val" id="pm-carb">0g</div><div class="rm-lbl">Karbo</div></div>
+      <div class="rm"><div class="rm-val" id="pm-fat">0g</div><div class="rm-lbl">Fett</div></div>
+      <div class="rm"><div class="rm-val" id="pm-fiber">0g</div><div class="rm-lbl">Fiber</div></div>
+    </div>
+    <div class="portion-row">
+      <span class="portion-lbl">Porsjon:</span>
+      <input class="portion-input" id="pm-qty" type="number" inputmode="decimal" value="100" oninput="updatePortion()" autocomplete="off">
+      <span style="font-size:12px;color:var(--muted)" id="pm-unit-lbl">gram</span>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Måltid</div>
+      <div class="meal-picker" id="pm-meal-picker">
+        <button class="mp-btn" onclick="setPMeal(this,'frokost')"><span class="mp-icon">🌅</span><div class="mp-lbl">Frokost</div><div class="mp-time">06–10</div></button>
+        <button class="mp-btn" onclick="setPMeal(this,'lunsj')"><span class="mp-icon">☀️</span><div class="mp-lbl">Lunsj</div><div class="mp-time">11–14</div></button>
+        <button class="mp-btn selected" onclick="setPMeal(this,'middag')"><span class="mp-icon">🌙</span><div class="mp-lbl">Middag</div><div class="mp-time">16–21</div></button>
+        <button class="mp-btn" onclick="setPMeal(this,'snacks')"><span class="mp-icon">🍎</span><div class="mp-lbl">Snacks</div><div class="mp-time">når som helst</div></button>
+        <button class="mp-btn" onclick="setPMeal(this,'drikke')"><span class="mp-icon">🥤</span><div class="mp-lbl">Drikke</div><div class="mp-time">–</div></button>
+        <button class="mp-btn" onclick="setPMeal(this,'kveldsmat')"><span class="mp-icon">🌛</span><div class="mp-lbl">Kveldsmat</div><div class="mp-time">21+</div></button>
+      </div>
+    </div>
+    <button class="add-btn" onclick="confirmAdd()">＋ Legg til i loggen</button>
+  </div>
+</div>
+
+<!-- MANUAL FOOD MODAL -->
+<div class="modal" id="manual-modal">
+  <div class="modal-sheet">
+    <div class="sheet-handle"></div>
+    <h3>✏️ Legg til manuelt</h3>
+    <div class="field-group"><label class="field-label">Navn</label><input class="field-input" id="man-name" type="text" placeholder="F.eks. Lasagne..." autocorrect="off" autocapitalize="sentences"></div>
+    <div class="field-group"><label class="field-label">Måltid</label>
+      <div class="meal-picker" id="man-mp">
+        <button class="mp-btn selected" onclick="selectManMeal(this,'frokost')"><span class="mp-icon">🌅</span><div class="mp-lbl">Frokost</div><div class="mp-time">06–10</div></button>
+        <button class="mp-btn" onclick="selectManMeal(this,'lunsj')"><span class="mp-icon">☀️</span><div class="mp-lbl">Lunsj</div><div class="mp-time">11–14</div></button>
+        <button class="mp-btn" onclick="selectManMeal(this,'middag')"><span class="mp-icon">🌙</span><div class="mp-lbl">Middag</div><div class="mp-time">16–21</div></button>
+        <button class="mp-btn" onclick="selectManMeal(this,'snacks')"><span class="mp-icon">🍎</span><div class="mp-lbl">Snacks</div><div class="mp-time">når som helst</div></button>
+        <button class="mp-btn" onclick="selectManMeal(this,'drikke')"><span class="mp-icon">🥤</span><div class="mp-lbl">Drikke</div><div class="mp-time">–</div></button>
+        <button class="mp-btn" onclick="selectManMeal(this,'kveldsmat')"><span class="mp-icon">🌛</span><div class="mp-lbl">Kveldsmat</div><div class="mp-time">21+</div></button>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group" style="margin:0"><label class="field-label">Kalorier (kcal) *</label><input class="field-input" id="man-kcal" type="number" inputmode="numeric" placeholder="650" autocomplete="off"></div>
+      <div class="field-group" style="margin:0"><label class="field-label">Gram / ml</label><input class="field-input" id="man-gram" type="number" inputmode="numeric" placeholder="300" autocomplete="off"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-group" style="margin:0"><label class="field-label">Protein (g)</label><input class="field-input" id="man-prot" type="number" inputmode="decimal" placeholder="0" autocomplete="off"></div>
+      <div class="field-group" style="margin:0"><label class="field-label">Karbo (g)</label><input class="field-input" id="man-carb" type="number" inputmode="decimal" placeholder="0" autocomplete="off"></div>
+    </div>
+    <div class="field-group"><label class="field-label">Fett (g)</label><input class="field-input" id="man-fat" type="number" inputmode="decimal" placeholder="0" style="max-width:48%" autocomplete="off"></div>
+    <button class="add-btn" onclick="addManual()">＋ Legg til i loggen</button>
+  </div>
+</div>
+
+<!-- CREATE/EDIT DRINK MODAL -->
+<div class="modal" id="drink-create-modal">
+  <div class="modal-sheet">
+    <div class="sheet-handle"></div>
+    <h3 id="drink-create-title">🥤 Ny drikke</h3>
+    <div style="display:grid;grid-template-columns:56px 1fr;gap:10px;margin-bottom:13px;">
+      <div>
+        <label class="field-label">Ikon</label>
+        <input class="field-input" id="dc-icon" type="text" value="🥤" style="font-size:24px;text-align:center;padding:10px 6px;" maxlength="2">
+      </div>
+      <div class="field-group" style="margin:0">
+        <label class="field-label">Navn *</label>
+        <input class="field-input" id="dc-name" type="text" placeholder="F.eks. Proteinshake, Cola…" autocorrect="off" autocapitalize="sentences">
+      </div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Kalorier per 100ml</label>
+      <input class="field-input" id="dc-kcal100" type="number" inputmode="decimal" placeholder="0 (skriv 0 for vann/te)" autocomplete="off" style="max-width:60%">
+    </div>
+    <div class="field-group">
+      <label class="field-label" style="margin-bottom:8px;display:block;">Størrelser</label>
+      <div id="dc-sizes-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+      <button onclick="addSizeRow()" style="background:none;border:1px dashed var(--border);border-radius:9px;color:var(--muted);padding:10px;width:100%;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">＋ Legg til størrelse</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:11px;padding:12px 14px;margin-bottom:16px;">
+      <div>
+        <div style="font-size:13px;font-weight:600;">⭐ Favoritt</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">Vises i rask tillegg øverst</div>
+      </div>
+      <button id="dc-fav-toggle" onclick="toggleDcFav()" style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--muted);">Nei</button>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="add-btn" onclick="saveDrink()" style="flex:1;">Lagre</button>
+      <button id="dc-delete-btn" onclick="deleteDrink()" style="display:none;background:none;border:1px solid var(--red);color:var(--red);border-radius:13px;padding:14px 18px;font-size:14px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;">Slett</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK ADD SIZE MODAL (choose size when tapping a drink) -->
+<div class="modal" id="drink-size-modal">
+  <div class="modal-sheet">
+    <div class="sheet-handle"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+      <div style="font-size:32px;" id="dsm-icon">🥤</div>
+      <div>
+        <div style="font-size:16px;font-weight:700;" id="dsm-name">–</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;" id="dsm-kcal-per">0 kcal / 100ml</div>
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;font-weight:700;">Velg størrelse</div>
+    <div id="dsm-sizes" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+    <div style="display:flex;align-items:center;gap:8px;border-top:1px solid var(--border);padding-top:14px;">
+      <span style="font-size:12px;color:var(--muted);flex-shrink:0;">Annet:</span>
+      <input type="number" inputmode="numeric" id="dsm-custom" class="field-input" placeholder="ml" style="flex:1;padding:10px 12px;">
+      <button onclick="addDrinkCustomSize()" style="background:var(--green);color:#0a0a0a;border:none;border-radius:10px;padding:10px 16px;font-weight:700;font-size:13px;cursor:pointer;">Legg til</button>
+    </div>
+  </div>
+</div>
+
+<!-- KCAL GOAL MODAL -->
+<div class="modal" id="kcal-modal">
+  <div class="modal-sheet"><div class="sheet-handle"></div><h3>Daglig kalorimål</h3>
+    <div class="modal-input-row"><input class="modal-input" id="kcal-input" type="number" inputmode="numeric" autocomplete="off"><span style="color:var(--muted);font-size:13px">kcal</span></div>
+    <button class="add-btn" onclick="saveKcalGoal()">Lagre</button></div>
+</div>
+
+<!-- WATER GOAL MODAL -->
+<div class="modal" id="water-goal-modal">
+  <div class="modal-sheet"><div class="sheet-handle"></div><h3>💧 Daglig vannmål</h3>
+    <div class="modal-input-row"><input class="modal-input" id="water-goal-input" type="number" inputmode="numeric" autocomplete="off"><span style="color:var(--muted);font-size:13px">ml</span></div>
+    <button class="add-btn" onclick="saveWaterGoal()">Lagre</button></div>
+</div>
+
+<!-- WEIGHT GOAL MODAL -->
+<div class="modal" id="wgoal-modal">
+  <div class="modal-sheet"><div class="sheet-handle"></div><h3>Målvekt</h3>
+    <div class="modal-input-row"><input class="modal-input" id="wgoal-input" type="number" inputmode="decimal" step="0.1" autocomplete="off"><span style="color:var(--muted);font-size:13px">kg</span></div>
+    <button class="add-btn" onclick="saveWGoal()">Lagre</button></div>
+</div>
+
+<!-- HEIGHT MODAL -->
+<div class="modal" id="height-modal">
+  <div class="modal-sheet"><div class="sheet-handle"></div><h3>📏 Din høyde</h3>
+    <div class="modal-input-row"><input class="modal-input" id="height-input" type="number" inputmode="numeric" placeholder="180" autocomplete="off"><span style="color:var(--muted);font-size:13px">cm</span></div>
+    <button class="add-btn" onclick="saveHeight()">Lagre</button></div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal" id="export-modal">
+  <div class="export-sheet">
+    <div class="sheet-handle"></div>
+    <h3 style="font-size:15px;font-weight:700;margin-bottom:6px;">📤 Eksporter data</h3>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:18px;line-height:1.6;">Del med Claude for analyse, eller ta backup.</p>
+    <div class="export-opt" onclick="exportJSON()"><span class="exp-icon">📋</span><div><div class="exp-title">Del med Claude (JSON)</div><div class="exp-sub">Last ned og last opp i Claude-chatten for analyse</div></div></div>
+    <div class="export-opt" onclick="exportCSV()"><span class="exp-icon">📊</span><div><div class="exp-title">Excel (CSV)</div><div class="exp-sub">Matlogg, drikkelogg og vektlogg</div></div></div>
+    <div class="export-opt" onclick="exportText()"><span class="exp-icon">💬</span><div><div class="exp-title">Kopier tekst</div><div class="exp-sub">Oppsummering klar til å lime inn</div></div></div>
+  </div>
+</div>
+
+<div id="toast">✅</div>
+
+<script>
+// ============================================================
+// STATE & CONSTANTS
+// ============================================================
+const MEALS={
+  frokost:{label:'Frokost',icon:'🌅',order:0},
+  lunsj:{label:'Lunsj',icon:'☀️',order:1},
+  middag:{label:'Middag',icon:'🌙',order:2},
+  snacks:{label:'Snacks',icon:'🍎',order:3},
+  drikke:{label:'Drikke',icon:'🥤',order:4},
+  kveldsmat:{label:'Kveldsmat',icon:'🌛',order:5}
+};
+
+const FOODS=[
+  {name:'Havregrøt (kokt)',cal:71,pro:2.5,carb:12,fat:1.4,fiber:1.7},
+  {name:'Egg (stort)',cal:78,pro:6.3,carb:0.6,fat:5.3,fiber:0,unit:'stk',base:1},
+  {name:'Gresk yoghurt 0%',cal:59,pro:10,carb:3.6,fat:0.4,fiber:0},
+  {name:'Banan',cal:89,pro:1.1,carb:23,fat:0.3,fiber:2.6,unit:'stk',base:1},
+  {name:'Kyllingbryst (stekt)',cal:165,pro:31,carb:0,fat:3.6,fiber:0},
+  {name:'Laks (rå)',cal:208,pro:20,carb:0,fat:13,fiber:0},
+  {name:'Ris (kokt)',cal:130,pro:2.7,carb:28,fat:0.3,fiber:0.4},
+  {name:'Pasta (kokt)',cal:131,pro:5,carb:25,fat:1.1,fiber:1.8},
+  {name:'Broccoli (rå)',cal:34,pro:2.8,carb:7,fat:0.4,fiber:2.6},
+  {name:'Søtpotet (bakt)',cal:90,pro:2,carb:21,fat:0.1,fiber:3.3},
+  {name:'Avokado',cal:160,pro:2,carb:9,fat:15,fiber:6.7},
+  {name:'Mandler',cal:579,pro:21,carb:22,fat:50,fiber:12},
+  {name:'Cottage cheese',cal:98,pro:11,carb:3.4,fat:4.3,fiber:0},
+  {name:'Hvetebrød',cal:266,pro:9,carb:51,fat:3.2,fiber:2.7},
+  {name:'Smør',cal:717,pro:0.9,carb:0.1,fat:81,fiber:0},
+  {name:'Melk (lettmelk)',cal:46,pro:3.4,carb:4.8,fat:1.5,fiber:0},
+  {name:'Tun (hermetisk)',cal:116,pro:26,carb:0,fat:1,fiber:0},
+  {name:'Kokt potet',cal:87,pro:1.9,carb:20,fat:0.1,fiber:1.8},
+  {name:'Olivenolje',cal:884,pro:0,carb:0,fat:100,fiber:0},
+  {name:'Tomat',cal:18,pro:0.9,carb:3.9,fat:0.2,fiber:1.2},
+  {name:'Biff (mager)',cal:215,pro:26,carb:0,fat:12,fiber:0},
+  {name:'Quinoa (kokt)',cal:120,pro:4.4,carb:22,fat:1.9,fiber:2.8},
+  {name:'Proteinpulver',cal:380,pro:75,carb:10,fat:4,fiber:2},
+  {name:'Bønner (hermetisk)',cal:91,pro:5.8,carb:16,fat:0.5,fiber:7},
+  {name:'Spinat',cal:23,pro:2.9,carb:3.6,fat:0.4,fiber:2.2},
+  {name:'Cheddar ost',cal:403,pro:25,carb:1.3,fat:33,fiber:0},
+  {name:'Appelsin',cal:47,pro:0.9,carb:12,fat:0.1,fiber:2.4},
+  {name:'Proteinbar',cal:200,pro:20,carb:20,fat:7,fiber:3,unit:'stk',base:1},
+];
+
+const DRINKS=[
+  {name:'Vann',cal:0,ml:250,icon:'💧'},
+  {name:'Kaffe (svart)',cal:2,ml:200,icon:'☕'},
+  {name:'Melk (lettmelk)',cal:46,ml:200,icon:'🥛'},
+  {name:'Appelsinjuice',cal:45,ml:200,icon:'🍊'},
+  {name:'Cola',cal:42,ml:330,icon:'🥤'},
+  {name:'Cola Zero',cal:0,ml:330,icon:'🥤'},
+  {name:'Sportsdrikk',cal:25,ml:500,icon:'⚡'},
+  {name:'Rødvin',cal:85,ml:150,icon:'🍷'},
+  {name:'Øl (lett)',cal:35,ml:330,icon:'🍺'},
+  {name:'Øl (pils)',cal:46,ml:500,icon:'🍺'},
+  {name:'Te (uten melk)',cal:1,ml:200,icon:'🍵'},
+  {name:'Smoothie',cal:65,ml:300,icon:'🥤'},
+];
+
+let log=JSON.parse(localStorage.getItem('ml7')||'[]');
+let drinkLog=JSON.parse(localStorage.getItem('ml7dr')||'[]');
+let weightLog=JSON.parse(localStorage.getItem('ml7wt')||'[]');
+let customDrinks=JSON.parse(localStorage.getItem('ml7cd')||'[]');
+let kcalGoal=parseInt(localStorage.getItem('ml7kcal')||'2000');
+let waterGoal=parseInt(localStorage.getItem('ml7wg')||'2500');
+let weightGoal=parseFloat(localStorage.getItem('ml7wtg')||'0');
+let userHeight=parseInt(localStorage.getItem('ml7h')||'0');
+let viewDate=new Date();viewDate.setHours(0,0,0,0);
+const todayDate=new Date();todayDate.setHours(0,0,0,0);
+let currentFood=null,selectedPMeal='middag',selectedManMeal='frokost';
+let scanMode='food'; // 'food' or 'drink'
+let stream=null,scanning=false,lastBarcode='';
+let aiTimer=null;
+let currentTab='mat';
+let editingDrinkId=null,dcFav=false;
+let currentDrinkForSize=null;
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('touchmove',function(e){if(e.target===document.body)e.preventDefault();},{passive:false});
+document.addEventListener('focusin',function(e){if(e.target.tagName==='INPUT')setTimeout(()=>e.target.scrollIntoView({behavior:'smooth',block:'center'}),350);});
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',function(e){if(e.target===this)this.classList.remove('active');}));
+
+updateDateNav();renderLog();updateTotals();updateManMealPicker();renderCustomDrinksList();renderFavGrid();renderDrinkLog();updateDrinkTotals();
+
+// ============================================================
+// DATE NAV
+// ============================================================
+function toIso(d){return d.toISOString().split('T')[0];}
+function isToday(d){return toIso(d)===toIso(todayDate);}
+function guessMeal(){const h=new Date().getHours();if(h<10)return'frokost';if(h<14)return'lunsj';if(h<17)return'snacks';if(h<22)return'middag';return'kveldsmat';}
+
+function updateDateNav(){
+  const diff=Math.round((viewDate-todayDate)/86400000);
+  const lbl=diff===0?'I dag':diff===-1?'I går':viewDate.toLocaleDateString('no-NO',{weekday:'long'});
+  const sub=viewDate.toLocaleDateString('no-NO',{day:'numeric',month:'long',year:'numeric'});
+  ['date-lbl','drink-date-lbl'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=lbl;});
+  ['date-sub','drink-date-sub'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=sub;});
+  document.getElementById('today-badge').style.display=diff===0?'block':'none';
+  document.getElementById('btn-next').disabled=diff>=0;
+  const dn=document.getElementById('drink-btn-next');if(dn)dn.disabled=diff>=0;
+  document.getElementById('ring-title').textContent=diff===0?'Spist i dag':'Spist denne dagen';
+  const ar=document.getElementById('mat-actions');if(ar)ar.style.display=diff<=0?'flex':'none';
+}
+
+function changeDay(dir){
+  const nd=new Date(viewDate);nd.setDate(nd.getDate()+dir);
+  if(nd>todayDate)return;
+  viewDate=nd;updateDateNav();renderLog();updateTotals();renderDrinkLog();updateDrinkTotals();
+}
+function goToday(){viewDate=new Date(todayDate);updateDateNav();renderLog();updateTotals();renderDrinkLog();updateDrinkTotals();}
+
+// ============================================================
+// TABS
+// ============================================================
+function showTab(t){
+  currentTab=t;
+  ['mat','drikke','vekt'].forEach(tab=>{
+    const el=document.getElementById('tab-'+tab);
+    if(el)el.style.display=t===tab?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach((b,i)=>{
+    b.classList.toggle('active',(['mat','drikke','vekt'][i])===t);
+  });
+  if(t==='vekt'){renderWeightLog();setTimeout(drawGraph,50);}
+  document.getElementById('app-root').scrollTop=0;
+}
+
+// ============================================================
+// BARCODE SCANNING
+// ============================================================
+async function startScan(mode){
+  scanMode=mode||'food';
+  document.getElementById('scan-overlay').classList.add('active');
+  document.getElementById('scan-result-area').innerHTML='';
+  lastBarcode='';scanning=true;
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
+    const video=document.getElementById('video');
+    video.srcObject=stream;await video.play();
+    const cr=new ZXing.BrowserMultiFormatReader();
+    cr.decodeFromVideoElement(video,(result)=>{
+      if(!scanning||!result)return;
+      const b=result.getText();
+      if(b!==lastBarcode){lastBarcode=b;scanning=false;lookupBarcode(b);}
+    });
+  }catch(e){
+    document.getElementById('scan-result-area').innerHTML=`
+      <div class="loading-sheet">
+        <div style="font-size:28px;margin-bottom:10px">📷</div>
+        <p style="font-size:13px;font-weight:700;margin-bottom:6px">Kamera ikke tilgjengelig</p>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:14px">Åpne filen i Safari for kamerastøtte, eller skriv strekkode manuelt:</p>
+        <div class="manual-barcode-row">
+          <input class="manual-bc-input" id="manual-bc" type="text" inputmode="numeric" placeholder="7037203626022">
+          <button class="manual-bc-btn" onclick="manualBcLookup()">Søk</button>
+        </div>
+        <button class="retry-btn" onclick="stopScan()">Lukk</button>
+      </div>`;
+  }
+}
+
+function startScanDrink(){startScan('drink');}
+function manualBcLookup(){const v=document.getElementById('manual-bc')?.value.trim();if(v){scanning=false;lookupBarcode(v);}}
+function stopScan(){scanning=false;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}document.getElementById('scan-overlay').classList.remove('active');document.getElementById('video').srcObject=null;}
+
+async function lookupBarcode(barcode){
+  document.getElementById('scan-result-area').innerHTML=`<div class="loading-sheet"><div class="spinner"></div><p style="color:var(--muted);font-size:13px">Henter produktinfo…</p><p style="color:var(--muted);font-size:10px;margin-top:4px">${barcode}</p></div>`;
+
+  // 1) Kassal.app – open product search (no auth needed, returns public product data)
+  try{
+    const res=await fetch(`https://kassal.app/api/v1/products/ean/${barcode}`,{
+      headers:{'Content-Type':'application/json'}
+    });
+    if(res.ok){
+      const data=await res.json();
+      const products=data.data?.products||data.data;
+      const p=Array.isArray(products)?products[0]:products;
+      if(p&&p.name){
+        const n=p.nutrition||{};
+        // kalorier kan ligge som energy_kcal eller energy/4.184
+        const kcal=Math.round(n.energy_kcal||n['energy-kcal']||(n.energy?n.energy/4.184:0)||0);
+        const nut={
+          name:p.name,brand:p.vendor||p.brand||'',
+          image:p.image||'',store:'',
+          kcal,
+          protein:Math.round((n.proteins||n.protein||0)*10)/10,
+          carbs:Math.round((n.carbohydrates||n.carbs||0)*10)/10,
+          fat:Math.round((n.fat||0)*10)/10,
+          fiber:Math.round((n.fiber||0)*10)/10,
+          emoji:getEmoji(p.name),source:'kassal'
+        };
+        currentFood=nut;showProductSheet(nut);return;
+      }
+    }
+  }catch(e){}
+
+  // 2) Open Food Facts via CORS proxy
+  const offUrls=[
+    `https://world.openfoodfacts.org/api/v2/product/${barcode}.json`,
+    `https://corsproxy.io/?https://world.openfoodfacts.org/api/v2/product/${barcode}.json`
+  ];
+  for(const url of offUrls){
+    try{
+      const res=await fetch(url);
+      const data=await res.json();
+      if(data.status===1&&data.product){
+        const p=data.product;const nu=p.nutriments||{};
+        const nut={
+          name:p.product_name_no||p.product_name_en||p.product_name||'Ukjent vare',
+          brand:p.brands||'',image:p.image_front_url||'',store:'',
+          kcal:Math.round(nu['energy-kcal_100g']||nu['energy-kcal']||0),
+          protein:Math.round((nu.proteins_100g||nu.protein_100g||0)*10)/10,
+          carbs:Math.round((nu.carbohydrates_100g||0)*10)/10,
+          fat:Math.round((nu.fat_100g||0)*10)/10,
+          fiber:Math.round((nu.fiber_100g||0)*10)/10,
+          emoji:getEmoji(p.product_name_no||p.product_name||''),source:'openfoodfacts'
+        };
+        currentFood=nut;showProductSheet(nut);return;
+      }
+    }catch(e){}
+  }
+
+  // 3) Not found — offer manual entry
+  document.getElementById('scan-result-area').innerHTML=`
+    <div class="result-sheet"><div class="sheet-handle"></div>
+    <div style="text-align:center;padding:8px 0 14px">
+      <div style="font-size:30px;margin-bottom:8px">🔍</div>
+      <p style="font-size:14px;font-weight:700;margin-bottom:4px">Vare ikke funnet</p>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:16px">Strekkode: ${barcode}</p>
+      <button class="retry-btn" onclick="retryScan()">🔄 Skann igjen</button>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px;">
+      <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Legg til manuelt:</p>
+      <div style="margin-bottom:8px;"><input class="manual-bc-input" id="not-found-name" type="text" placeholder="Navn på varen" autocorrect="off" style="width:100%;"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <input class="manual-bc-input" id="not-found-kcal" type="number" inputmode="numeric" placeholder="kcal/100g">
+        <input class="manual-bc-input" id="not-found-gram" type="number" inputmode="numeric" placeholder="Gram">
+      </div>
+      <button class="manual-bc-btn" onclick="addNotFoundManually()" style="width:100%;border-radius:11px;padding:13px;">＋ Legg til</button>
+    </div></div>`;
+}
+
+function addNotFoundManually(){
+  const name=document.getElementById('not-found-name')?.value.trim();
+  const kcal100=parseFloat(document.getElementById('not-found-kcal')?.value)||0;
+  const gram=parseFloat(document.getElementById('not-found-gram')?.value)||100;
+  if(!name){showToast('⚠️ Skriv inn navn');return;}
+  const kcal=Math.round(kcal100*(gram/100));
+  const guess=scanMode==='drink'?'drikke':guessMeal();
+  commitEntry({name,emoji:getEmoji(name),meal:guess,kcal,protein:0,carbs:0,fat:0,fiber:0,grams:gram,source:'manual'});
+  stopScan();
+  showToast('✅ Lagt til!');
+}
+
+function retryScan(){lastBarcode='';scanning=true;document.getElementById('scan-result-area').innerHTML='';}
+
+function showProductSheet(p){
+  const imgHtml=p.image?`<img src="${p.image}" class="product-img" onerror="this.style.display='none'">`:'<div class="product-img" style="display:flex;align-items:center;justify-content:center;font-size:28px">'+p.emoji+'</div>';
+  document.getElementById('scan-result-area').innerHTML=`
+    <div class="result-sheet">
+      <div class="sheet-handle"></div>
+      <div class="product-header">
+        ${imgHtml}
+        <div>
+          <div class="product-name">${p.name}</div>
+          ${p.brand?`<div class="product-brand">${p.brand}</div>`:''}
+          ${p.store?`<div class="product-store">📍 ${p.store}</div>`:''}
+          <div style="font-size:9px;color:${p.source==='kassal'?'var(--teal)':'var(--muted)'};margin-top:3px;">${p.source==='kassal'?'✓ kassal.app':'Open Food Facts'}</div>
+        </div>
+      </div>
+      <div class="res-macros">
+        <div class="rm"><div class="rm-val" id="sr-kcal">${p.kcal}</div><div class="rm-lbl">kcal</div></div>
+        <div class="rm"><div class="rm-val" id="sr-prot">${p.protein}g</div><div class="rm-lbl">Protein</div></div>
+        <div class="rm"><div class="rm-val" id="sr-carb">${p.carbs}g</div><div class="rm-lbl">Karbo</div></div>
+        <div class="rm"><div class="rm-val" id="sr-fat">${p.fat}g</div><div class="rm-lbl">Fett</div></div>
+        <div class="rm"><div class="rm-val" id="sr-fib">${p.fiber}g</div><div class="rm-lbl">Fiber</div></div>
+      </div>
+      <div class="portion-row">
+        <span class="portion-lbl">Porsjon:</span>
+        <input class="portion-input" id="scan-qty" type="number" inputmode="decimal" value="100" oninput="updateScanPortion()" autocomplete="off">
+        <span style="font-size:12px;color:var(--muted)">gram</span>
+      </div>
+      <button class="add-btn" onclick="addScannedProduct()">＋ Velg måltid & legg til</button>
+    </div>`;
+}
+
+function updateScanPortion(){
+  if(!currentFood)return;
+  const g=parseFloat(document.getElementById('scan-qty').value)||0,f=g/100;
+  document.getElementById('sr-kcal').textContent=Math.round(currentFood.kcal*f);
+  document.getElementById('sr-prot').textContent=Math.round(currentFood.protein*f*10)/10+'g';
+  document.getElementById('sr-carb').textContent=Math.round(currentFood.carbs*f*10)/10+'g';
+  document.getElementById('sr-fat').textContent=Math.round(currentFood.fat*f*10)/10+'g';
+  document.getElementById('sr-fib').textContent=Math.round(currentFood.fiber*f*10)/10+'g';
+}
+
+function addScannedProduct(){
+  const g=parseFloat(document.getElementById('scan-qty')?.value)||100,f=g/100;
+  if(!currentFood)return;
+  const guess=scanMode==='drink'?'drikke':guessMeal();
+  openPortionModal(currentFood,g,guess);
+  stopScan();
+}
+
+// ============================================================
+// PORTION MODAL (shared)
+// ============================================================
+function openPortionModal(food,qty,mealGuess){
+  currentFood=food;
+  document.getElementById('pm-name').textContent=food.name;
+  document.getElementById('pm-brand').textContent=food.brand||'';
+  document.getElementById('pm-store').textContent=food.store||'';
+  const isUnit=food.unit==='stk';
+  document.getElementById('pm-qty').value=qty||(isUnit?1:100);
+  document.getElementById('pm-unit-lbl').textContent=isUnit?'stykk':'gram';
+  updatePortion();
+  selectedPMeal=mealGuess||guessMeal();
+  document.querySelectorAll('#pm-meal-picker .mp-btn').forEach(b=>{
+    const m=b.getAttribute('onclick').match(/'(\w+)'/)?.[1];
+    b.classList.toggle('selected',m===selectedPMeal);
+  });
+  document.getElementById('portion-modal').classList.add('active');
+}
+
+function setPMeal(btn,meal){
+  selectedPMeal=meal;
+  document.querySelectorAll('#pm-meal-picker .mp-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function updatePortion(){
+  if(!currentFood)return;
+  const qty=parseFloat(document.getElementById('pm-qty').value)||0;
+  const isUnit=currentFood.unit==='stk';
+  const mult=isUnit?qty:qty/100;
+  document.getElementById('pm-kcal').textContent=Math.round((currentFood.kcal||currentFood.cal||0)*mult);
+  document.getElementById('pm-prot').textContent=Math.round((currentFood.protein||currentFood.pro||0)*mult*10)/10+'g';
+  document.getElementById('pm-carb').textContent=Math.round((currentFood.carbs||currentFood.carb||0)*mult*10)/10+'g';
+  document.getElementById('pm-fat').textContent=Math.round((currentFood.fat||0)*mult*10)/10+'g';
+  document.getElementById('pm-fiber').textContent=Math.round((currentFood.fiber||0)*mult*10)/10+'g';
+}
+
+function confirmAdd(){
+  if(!currentFood)return;
+  const qty=parseFloat(document.getElementById('pm-qty').value)||0;
+  const isUnit=currentFood.unit==='stk';
+  const mult=isUnit?qty:qty/100;
+  const cal=currentFood.kcal||currentFood.cal||0;
+  const pro=currentFood.protein||currentFood.pro||0;
+  const carb=currentFood.carbs||currentFood.carb||0;
+  commitEntry({
+    name:currentFood.name,emoji:currentFood.emoji||getEmoji(currentFood.name),
+    meal:selectedPMeal,
+    kcal:Math.round(cal*mult),
+    protein:Math.round(pro*mult*10)/10,
+    carbs:Math.round(carb*mult*10)/10,
+    fat:Math.round((currentFood.fat||0)*mult*10)/10,
+    fiber:Math.round((currentFood.fiber||0)*mult*10)/10,
+    grams:isUnit?0:Math.round(qty),
+    source:currentFood.source||'manual'
+  });
+  document.getElementById('portion-modal').classList.remove('active');
+  closeSearch();
+  showToast('✅ Lagt til!');
+}
+
+// ============================================================
+// FOOD SEARCH
+// ============================================================
+function toggleSearch(){
+  const w=document.getElementById('search-wrap');
+  const vis=w.style.display==='none'||w.style.display==='';
+  w.style.display=vis?'block':'none';
+  if(vis)document.getElementById('search-input').focus();
+  else{document.getElementById('search-input').value='';document.getElementById('search-results').innerHTML='';clearTimeout(aiTimer);}
+}
+function closeSearch(){
+  document.getElementById('search-wrap').style.display='none';
+  document.getElementById('search-input').value='';
+  document.getElementById('search-results').innerHTML='';
+  clearTimeout(aiTimer);
+}
+
+function onSearch(){
+  const q=document.getElementById('search-input').value.trim();
+  clearTimeout(aiTimer);
+  if(!q){document.getElementById('search-results').innerHTML='';return;}
+  const local=FOODS.filter(f=>f.name.toLowerCase().includes(q.toLowerCase())).slice(0,5);
+  renderFoodResults(local,'local');
+  aiTimer=setTimeout(()=>doAiSearch(q,'search-results'),700);
+}
+
+function renderFoodResults(foods,mode){
+  if(!foods.length&&mode==='local')return;
+  const el=document.getElementById('search-results');
+  const rows=foods.map(f=>`<div class="sr-item" onclick="selectFood(${escJ(f)})">
+    <span class="sr-emoji">${getEmoji(f.name)}</span>
+    <div class="sr-info"><div class="sr-name">${f.name}</div><div class="sr-sub">${f.unit?'per stk':'per 100g'}</div></div>
+    <span class="sr-kcal">${f.cal||f.kcal} kcal</span>
+  </div>`).join('');
+  if(mode==='local'){el.innerHTML=`<div class="search-results">${rows}</div>`;}
+  else{
+    const existing=el.querySelector('.search-results');
+    if(existing){existing.innerHTML+=rows;}
+    else{el.innerHTML=`<div class="search-results">${rows}</div>`;}
+  }
+}
+
+async function doAiSearch(q,resultsId){
+  const el=document.getElementById(resultsId);
+  const hasItems=el.querySelector('.sr-item');
+  const load=`<div class="sr-searching"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span style="margin-left:5px">Claude søker…</span></div>`;
+  if(hasItems){const sr=el.querySelector('.search-results');if(sr)sr.innerHTML+=load;}
+  else{el.innerHTML=`<div class="search-results">${load}</div>`;}
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,
+        system:'Du er ernæringsekspert. Returner KUN JSON-array, ingen markdown. Format: [{"name":"...","cal":100,"pro":10,"carb":15,"fat":5,"fiber":2}] per 100g. Maks 4 varer.',
+        messages:[{role:'user',content:`Finn ernæringsdata per 100g for: ${q}`}]})});
+    const data=await res.json();
+    const txt=(data.content?.[0]?.text||'[]').replace(/```json|```/g,'').trim();
+    const items=JSON.parse(txt).map(f=>({...f,kcal:f.cal||f.kcal||f.energy_kcal,protein:f.pro||f.protein,carbs:f.carb||f.carbs,aiGenerated:true}));
+    if(items.length){
+      const existing=el.querySelector('.search-results');
+      const oldRows=existing?Array.from(existing.querySelectorAll('.sr-item')).map(e=>e.outerHTML).join(''):'';
+      const newRows=items.map(f=>`<div class="sr-item" onclick="selectFood(${escJ(f)})">
+        <span class="sr-emoji">${getEmoji(f.name)}</span>
+        <div class="sr-info"><div class="sr-name">${f.name} <span class="ai-badge-sm">AI</span></div><div class="sr-sub">per 100g · estimat</div></div>
+        <span class="sr-kcal">${f.kcal||f.cal} kcal</span>
+      </div>`).join('');
+      el.innerHTML=`<div class="search-results">${oldRows}${newRows}</div>`;
+    }else{const sr=el.querySelector('.search-results');if(sr){const load=sr.querySelector('.sr-searching');if(load)load.remove();}}
+  }catch(e){const sr=el.querySelector('.search-results');if(sr){const load=sr.querySelector('.sr-searching');if(load)load.remove();}}
+}
+
+function selectFood(f){
+  if(typeof f==='string')try{f=JSON.parse(f);}catch(e){return;}
+  const food={...f,kcal:f.kcal||f.cal||0,protein:f.protein||f.pro||0,carbs:f.carbs||f.carb||0,emoji:getEmoji(f.name)};
+  openPortionModal(food,null,guessMeal());
+}
+
+function escJ(obj){return JSON.stringify(obj).replace(/"/g,'&quot;');}
+
+// ============================================================
+// DRINK SEARCH
+// ============================================================
+function toggleDrinkSearch(){}
+function closeDrinkSearch(){}
+
+// ============================================================
+// CUSTOM DRINKS SYSTEM
+// ============================================================
+function openDrinkCreate(drinkId){
+  editingDrinkId=drinkId||null;
+  dcFav=false;
+  const d=drinkId?customDrinks.find(x=>x.id===drinkId):null;
+  document.getElementById('drink-create-title').textContent=d?'✏️ Rediger drikke':'🥤 Ny drikke';
+  document.getElementById('dc-icon').value=d?d.icon:'🥤';
+  document.getElementById('dc-name').value=d?d.name:'';
+  document.getElementById('dc-kcal100').value=d?(d.kcal100||0):'';
+  dcFav=d?!!d.fav:false;
+  updateDcFavBtn();
+  // Sizes
+  const sizeList=document.getElementById('dc-sizes-list');
+  sizeList.innerHTML='';
+  const sizes=d&&d.sizes?d.sizes:[{label:'',ml:330}];
+  sizes.forEach(s=>addSizeRow(s.label,s.ml));
+  document.getElementById('dc-delete-btn').style.display=d?'block':'none';
+  document.getElementById('drink-create-modal').classList.add('active');
+}
+
+function toggleDcFav(){dcFav=!dcFav;updateDcFavBtn();}
+function updateDcFavBtn(){
+  const btn=document.getElementById('dc-fav-toggle');
+  btn.textContent=dcFav?'Ja ⭐':'Nei';
+  btn.style.color=dcFav?'var(--green)':'var(--muted)';
+  btn.style.borderColor=dcFav?'rgba(184,249,122,0.4)':'var(--border)';
+}
+
+function addSizeRow(label,ml){
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;gap:8px;align-items:center;';
+  row.innerHTML=`
+    <input type="text" class="field-input" placeholder="Navn (f.eks. Liten)" value="${label||''}" style="flex:1;padding:10px 12px;font-size:14px;" maxlength="20">
+    <input type="number" inputmode="numeric" class="field-input" placeholder="ml" value="${ml||''}" style="width:80px;padding:10px 12px;font-size:14px;text-align:center;">
+    <button onclick="this.parentNode.remove()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px 8px;flex-shrink:0;">✕</button>`;
+  document.getElementById('dc-sizes-list').appendChild(row);
+}
+
+function saveDrink(){
+  const icon=document.getElementById('dc-icon').value.trim()||'🥤';
+  const name=document.getElementById('dc-name').value.trim();
+  if(!name){showToast('⚠️ Skriv inn et navn');return;}
+  const kcal100=parseFloat(document.getElementById('dc-kcal100').value)||0;
+  // Collect sizes
+  const rows=document.getElementById('dc-sizes-list').querySelectorAll('div');
+  const sizes=[];
+  rows.forEach(row=>{
+    const inputs=row.querySelectorAll('input');
+    const ml=parseInt(inputs[1].value)||0;
+    if(ml>0)sizes.push({label:inputs[0].value.trim()||ml+'ml',ml});
+  });
+  if(!sizes.length){showToast('⚠️ Legg til minst én størrelse');return;}
+  if(editingDrinkId){
+    const idx=customDrinks.findIndex(x=>x.id===editingDrinkId);
+    if(idx>=0)customDrinks[idx]={...customDrinks[idx],icon,name,kcal100,sizes,fav:dcFav};
+  }else{
+    customDrinks.push({id:Date.now(),icon,name,kcal100,sizes,fav:dcFav});
+  }
+  localStorage.setItem('ml7cd',JSON.stringify(customDrinks));
+  document.getElementById('drink-create-modal').classList.remove('active');
+  renderCustomDrinksList();renderFavGrid();
+  showToast('✅ Lagret!');
+}
+
+function deleteDrink(){
+  if(!editingDrinkId)return;
+  customDrinks=customDrinks.filter(x=>x.id!==editingDrinkId);
+  localStorage.setItem('ml7cd',JSON.stringify(customDrinks));
+  document.getElementById('drink-create-modal').classList.remove('active');
+  renderCustomDrinksList();renderFavGrid();
+  showToast('🗑 Slettet');
+}
+
+function toggleDrinkFav(id){
+  const d=customDrinks.find(x=>x.id===id);
+  if(d){d.fav=!d.fav;localStorage.setItem('ml7cd',JSON.stringify(customDrinks));}
+  renderCustomDrinksList();renderFavGrid();
+}
+
+function renderCustomDrinksList(){
+  const el=document.getElementById('custom-drinks-list');if(!el)return;
+  if(!customDrinks.length){
+    el.innerHTML=`<div style="text-align:center;color:var(--muted);padding:20px 0;font-size:12px;line-height:1.7;">Ingen drikker ennå.<br>Trykk "＋ Ny drikke" for å opprette din første.</div>`;
+    return;
+  }
+  el.innerHTML=customDrinks.map(d=>`
+    <div class="drink-item-card">
+      <div style="font-size:26px;flex-shrink:0;">${d.icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;">${d.name}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">${d.kcal100} kcal/100ml · ${d.sizes.map(s=>s.label||s.ml+'ml').join(', ')}</div>
+      </div>
+      <button class="drink-fav-btn${d.fav?' active':''}" onclick="toggleDrinkFav(${d.id})">⭐</button>
+      <button onclick="openDrinkForSize(${d.id})" style="background:var(--green);color:#0a0a0a;border:none;border-radius:9px;padding:8px 14px;font-weight:700;font-size:12px;cursor:pointer;flex-shrink:0;">Logg</button>
+      <button onclick="openDrinkCreate(${d.id})" style="background:none;border:1px solid var(--border);border-radius:9px;padding:8px 10px;font-size:13px;cursor:pointer;color:var(--muted);flex-shrink:0;">✏️</button>
+    </div>`).join('');
+}
+
+function renderFavGrid(){
+  const favs=customDrinks.filter(d=>d.fav);
+  const grid=document.getElementById('fav-grid');
+  const empty=document.getElementById('fav-empty');
+  if(!grid)return;
+  if(!favs.length){grid.style.display='none';if(empty)empty.style.display='block';return;}
+  grid.style.display='grid';if(empty)empty.style.display='none';
+  grid.innerHTML=favs.map(d=>{
+    const defaultSize=d.sizes[0];
+    return`<button onclick="openDrinkForSize(${d.id})" style="background:var(--surface);border:1px solid rgba(122,249,224,0.2);border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;">
+      <div style="font-size:22px;">${d.icon}</div>
+      <div style="font-size:10px;font-weight:700;margin-top:4px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.name}</div>
+      <div style="font-size:9px;color:var(--teal);margin-top:1px;">${defaultSize.ml}ml</div>
+    </button>`;
+  }).join('');
+}
+
+function openDrinkForSize(id){
+  const d=customDrinks.find(x=>x.id===id);if(!d)return;
+  currentDrinkForSize=d;
+  document.getElementById('dsm-icon').textContent=d.icon;
+  document.getElementById('dsm-name').textContent=d.name;
+  document.getElementById('dsm-kcal-per').textContent=`${d.kcal100} kcal / 100ml`;
+  const sizesEl=document.getElementById('dsm-sizes');
+  sizesEl.innerHTML=d.sizes.map(s=>{
+    const kcal=Math.round(d.kcal100*(s.ml/100));
+    return`<button onclick="addCustomDrinkSize(${s.ml})" style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%;">
+      <div style="text-align:left;">
+        <div style="font-size:14px;font-weight:600;color:var(--text);">${s.label||s.ml+'ml'}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:1px;">${s.ml}ml</div>
+      </div>
+      <div style="font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--teal);">${kcal} kcal</div>
+    </button>`;
+  }).join('');
+  document.getElementById('dsm-custom').value='';
+  document.getElementById('drink-size-modal').classList.add('active');
+}
+
+function addCustomDrinkSize(ml){
+  if(!currentDrinkForSize)return;
+  const d=currentDrinkForSize;
+  const kcal=Math.round(d.kcal100*(ml/100));
+  addDrinkEntry({name:d.name,icon:d.icon,ml,kcal});
+  document.getElementById('drink-size-modal').classList.remove('active');
+}
+
+function addDrinkCustomSize(){
+  const ml=parseInt(document.getElementById('dsm-custom').value)||0;
+  if(!ml||ml<1){showToast('⚠️ Skriv inn mengde');return;}
+  addCustomDrinkSize(ml);
+}
+
+// ============================================================
+// COMMIT ENTRIES
+// ============================================================
+function commitEntry(entry){
+  log.push({id:Date.now()+Math.random(),date:toIso(viewDate),...entry,
+    time:new Date().toLocaleTimeString('no-NO',{hour:'2-digit',minute:'2-digit'})});
+  localStorage.setItem('ml7',JSON.stringify(log));
+  renderLog();updateTotals();
+}
+function removeEntry(id){log=log.filter(e=>e.id!==id);localStorage.setItem('ml7',JSON.stringify(log));renderLog();updateTotals();}
+
+function addDrinkEntry(entry){
+  drinkLog.push({id:Date.now()+Math.random(),date:toIso(viewDate),...entry,
+    time:new Date().toLocaleTimeString('no-NO',{hour:'2-digit',minute:'2-digit'})});
+  localStorage.setItem('ml7dr',JSON.stringify(drinkLog));
+  renderDrinkLog();updateDrinkTotals();updateTotals();
+  showToast(`${entry.icon||'💧'} ${entry.ml}ml registrert!`);
+}
+function removeDrinkEntry(id){drinkLog=drinkLog.filter(e=>e.id!==id);localStorage.setItem('ml7dr',JSON.stringify(drinkLog));renderDrinkLog();updateDrinkTotals();updateTotals();}
+
+// ============================================================
+// RENDER LOG
+// ============================================================
+function renderLog(){
+  const ds=toIso(viewDate),dl=log.filter(e=>e.date===ds);
+  const sec=document.getElementById('log-section');
+  if(!dl.length){sec.innerHTML=`<div class="log-empty-day">${isToday(viewDate)?'📱 Ingen måltider registrert i dag<br><span style="font-size:11px;color:#444">Skann strekkode, bruk AI-søk eller legg til manuelt</span>':'📅 Ingen måltider denne dagen'}</div>`;return;}
+  let html='';
+  Object.entries(MEALS).sort((a,b)=>a[1].order-b[1].order).forEach(([key,meta])=>{
+    const items=dl.filter(e=>e.meal===key);if(!items.length)return;
+    const gk=items.reduce((s,e)=>s+e.kcal,0);
+    html+=`<div class="meal-group"><div class="mg-header"><span class="mg-icon">${meta.icon}</span><span class="mg-name">${meta.label}</span><span class="mg-kcal">${gk} kcal</span></div>`;
+    items.forEach(e=>{html+=`<div class="log-item">
+      <div class="li-icon">${e.emoji||'🍽️'}</div>
+      <div class="li-details"><div class="li-name">${e.name}</div>
+      <div class="li-meta">${e.grams?e.grams+'g · ':''}P ${e.protein}g · K ${e.carbs}g · F ${e.fat}g · ${e.time||''}</div></div>
+      <div class="li-kcal">${e.kcal}</div>
+      <button class="li-del" onclick="removeEntry(${JSON.stringify(e.id)})">✕</button></div>`;});
+    html+='</div>';
+  });
+  sec.innerHTML=html;
+}
+
+function renderDrinkLog(){
+  const ds=toIso(viewDate),dl=drinkLog.filter(e=>e.date===ds);
+  const sec=document.getElementById('drink-log-section');
+  if(!sec)return;
+  if(!dl.length){sec.innerHTML=`<div style="text-align:center;color:var(--muted);padding:24px 0;font-size:12px">💧 Ingen drikke registrert i dag</div>`;return;}
+  let html='<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Logg</div>';
+  dl.forEach(e=>{html+=`<div class="log-item">
+    <div class="li-icon">${e.icon||'🥤'}</div>
+    <div class="li-details"><div class="li-name">${e.name}</div>
+    <div class="li-meta">${e.ml}ml · ${e.time||''}</div></div>
+    <div class="li-kcal" style="color:var(--teal)">${e.ml}ml</div>
+    <button class="li-del" onclick="removeDrinkEntry(${JSON.stringify(e.id)})">✕</button></div>`;});
+  sec.innerHTML=html;
+}
+
+function updateTotals(){
+  const ds=toIso(viewDate),tl=log.filter(e=>e.date===ds);
+  const dl=drinkLog.filter(e=>e.date===ds);
+  const totKcal=tl.reduce((s,e)=>s+e.kcal,0);
+  const totP=Math.round(tl.reduce((s,e)=>s+(e.protein||0),0)*10)/10;
+  const totK=Math.round(tl.reduce((s,e)=>s+(e.carbs||0),0)*10)/10;
+  const totF=Math.round(tl.reduce((s,e)=>s+(e.fat||0),0)*10)/10;
+  const totV=dl.reduce((s,e)=>s+(e.ml||0),0);
+  document.getElementById('ring-kcal').textContent=totKcal;
+  document.getElementById('remaining-text').textContent=`${totKcal} av ${kcalGoal} kcal`;
+  ['m-p','m-k','m-f'].forEach((id,i)=>{document.getElementById(id).textContent=[totP+'g',totK+'g',totF+'g'][i];});
+  document.getElementById('m-v').textContent=totV+'ml';
+  const pct=Math.min(totKcal/kcalGoal,1),c=251.2;
+  document.getElementById('ring-fill').style.strokeDashoffset=c-(c*pct);
+  document.getElementById('ring-fill').style.stroke=pct>0.95?'var(--red)':'var(--green)';
+  document.getElementById('b-p').style.width=Math.min(totP/(kcalGoal*0.03),1)*100+'%';
+  document.getElementById('b-k').style.width=Math.min(totK/(kcalGoal*0.06),1)*100+'%';
+  document.getElementById('b-f').style.width=Math.min(totF/(kcalGoal*0.03),1)*100+'%';
+  document.getElementById('b-v').style.width=Math.min(totV/waterGoal,1)*100+'%';
+}
+
+function updateDrinkTotals(){
+  const ds=toIso(viewDate),dl=drinkLog.filter(e=>e.date===ds);
+  const tot=dl.reduce((s,e)=>s+(e.ml||0),0);
+  const wml=document.getElementById('water-ml');if(wml)wml.textContent=tot;
+  const wrt=document.getElementById('water-remaining-text');if(wrt)wrt.textContent=`${tot} av ${waterGoal} ml`;
+  const wrf=document.getElementById('water-ring-fill');if(wrf){
+    const pct=Math.min(tot/waterGoal,1),c=251.2;
+    wrf.style.strokeDashoffset=c-(c*pct);
+  }
+}
+
+// ============================================================
+// MANUAL
+// ============================================================
+function updateManMealPicker(){
+  const g=guessMeal();selectedManMeal=g;
+  document.querySelectorAll('#man-mp .mp-btn').forEach(b=>{
+    const m=b.getAttribute('onclick').match(/'(\w+)'/)?.[1];
+    b.classList.toggle('selected',m===g);
+  });
+}
+function selectManMeal(btn,meal){
+  selectedManMeal=meal;
+  document.querySelectorAll('#man-mp .mp-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+function openManual(){updateManMealPicker();document.getElementById('manual-modal').classList.add('active');}
+function addManual(){
+  const name=document.getElementById('man-name').value.trim();
+  const kcal=parseInt(document.getElementById('man-kcal').value)||0;
+  if(!name||!kcal){showToast('⚠️ Fyll inn navn og kalorier');return;}
+  commitEntry({name,emoji:'🍽️',meal:selectedManMeal,kcal,
+    protein:parseFloat(document.getElementById('man-prot').value)||0,
+    carbs:parseFloat(document.getElementById('man-carb').value)||0,
+    fat:parseFloat(document.getElementById('man-fat').value)||0,
+    fiber:0,grams:parseInt(document.getElementById('man-gram').value)||0,source:'manual'});
+  ['man-name','man-kcal','man-gram','man-prot','man-carb','man-fat'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('manual-modal').classList.remove('active');
+  showToast('✅ Lagt til!');
+}
+
+// ============================================================
+// GOALS
+// ============================================================
+function openKcalGoal(){document.getElementById('kcal-input').value=kcalGoal;document.getElementById('kcal-modal').classList.add('active');}
+function saveKcalGoal(){kcalGoal=parseInt(document.getElementById('kcal-input').value)||2000;localStorage.setItem('ml7kcal',kcalGoal);document.getElementById('kcal-modal').classList.remove('active');updateTotals();}
+function openWaterGoal(){document.getElementById('water-goal-input').value=waterGoal;document.getElementById('water-goal-modal').classList.add('active');}
+function saveWaterGoal(){waterGoal=parseInt(document.getElementById('water-goal-input').value)||2500;localStorage.setItem('ml7wg',waterGoal);document.getElementById('water-goal-modal').classList.remove('active');updateDrinkTotals();updateTotals();}
+function openWGoal(){if(weightGoal)document.getElementById('wgoal-input').value=weightGoal;document.getElementById('wgoal-modal').classList.add('active');}
+function saveWGoal(){weightGoal=parseFloat(document.getElementById('wgoal-input').value)||0;localStorage.setItem('ml7wtg',weightGoal);document.getElementById('wgoal-modal').classList.remove('active');renderWeightLog();}
+function openHeight(){document.getElementById('height-input').value=userHeight||'';document.getElementById('height-modal').classList.add('active');}
+function saveHeight(){const h=parseInt(document.getElementById('height-input').value);if(!h||h<100||h>250){showToast('⚠️ Skriv inn høyde 100–250 cm');return;}userHeight=h;localStorage.setItem('ml7h',h);document.getElementById('height-modal').classList.remove('active');renderWeightLog();showToast('✅ Høyde lagret');}
+
+// ============================================================
+// WEIGHT
+// ============================================================
+function addWeight(){
+  const v=parseFloat(document.getElementById('w-val').value);
+  if(!v||v<20||v>300){showToast('⚠️ Ugyldig vekt');return;}
+  weightLog.push({id:Date.now(),date:toIso(todayDate),kg:v,time:new Date().toLocaleTimeString('no-NO',{hour:'2-digit',minute:'2-digit'})});
+  localStorage.setItem('ml7wt',JSON.stringify(weightLog));
+  document.getElementById('w-val').value='';
+  renderWeightLog();drawGraph();showToast('✅ Vekt lagret!');
+}
+function removeWeight(id){weightLog=weightLog.filter(e=>e.id!==id);localStorage.setItem('ml7wt',JSON.stringify(weightLog));renderWeightLog();drawGraph();}
+
+function renderWeightLog(){
+  document.getElementById('w-goal-display').textContent=weightGoal?weightGoal+' kg':'ikke satt';
+  const list=document.getElementById('w-log-list');
+  if(!weightLog.length){
+    document.getElementById('w-current').innerHTML='–<span> kg</span>';
+    document.getElementById('w-change').textContent='–';
+    document.getElementById('prog-section').style.display='none';
+    renderBmi(null);
+    list.innerHTML=`<div class="log-empty-s">⚖️ Ingen målinger ennå</div>`;return;
+  }
+  const sorted=[...weightLog].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const latest=sorted[sorted.length-1],first=sorted[0],diff=Math.round((latest.kg-first.kg)*10)/10;
+  document.getElementById('w-current').innerHTML=`${latest.kg}<span> kg</span>`;
+  const ce=document.getElementById('w-change');ce.textContent=(diff>0?'+':'')+diff+' kg';ce.style.color=diff<0?'var(--green)':diff>0?'var(--red)':'var(--muted)';
+  renderBmi(latest.kg);
+  if(weightGoal&&weightLog.length>1){
+    const tn=first.kg-weightGoal,ac=first.kg-latest.kg,pct=tn>0?Math.min(Math.max(ac/tn*100,0),100):0;
+    document.getElementById('prog-section').style.display='block';
+    document.getElementById('p-start').textContent=first.kg+' kg';
+    document.getElementById('p-goal-lbl').textContent=weightGoal+' kg';
+    document.getElementById('p-pct').textContent=Math.round(pct)+'%';
+    document.getElementById('p-bar').style.width=pct+'%';
+  }else document.getElementById('prog-section').style.display='none';
+  list.innerHTML=[...sorted].reverse().map((e,i,arr)=>{
+    const prev=arr[i+1],d=prev?Math.round((e.kg-prev.kg)*10)/10:null;
+    const ds=d!==null?(d>0?`<span style="color:var(--red);font-size:11px">+${d}</span>`:`<span style="color:var(--green);font-size:11px">${d}</span>`):'';
+    return`<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 15px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:12px;color:var(--muted)">${fmtDate(e.date)} · ${e.time}</div>
+      <div style="display:flex;align-items:center;gap:7px">${ds}<div style="font-family:'Space Mono',monospace;font-size:14px;font-weight:700">${e.kg} kg</div>
+      <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:5px 8px;" onclick="removeWeight(${JSON.stringify(e.id)})">✕</button></div></div>`;
+  }).join('');
+}
+
+function fmtDate(iso){return new Date(iso+'T12:00:00').toLocaleDateString('no-NO',{day:'numeric',month:'short'});}
+
+function getBmiCat(bmi){
+  if(bmi<18.5)return{label:'Undervekt',color:'#7eb8f9',e:'📉'};
+  if(bmi<25)return{label:'Normal vekt',color:'#b8f97a',e:'✅'};
+  if(bmi<30)return{label:'Overvekt',color:'#f9c97e',e:'⚠️'};
+  if(bmi<35)return{label:'Fedme kl. I',color:'#ff6b6b',e:'🔴'};
+  return{label:'Fedme kl. II',color:'#c4a7f7',e:'🔴'};
+}
+
+function renderBmi(wkg){
+  const el=document.getElementById('bmi-content');
+  if(!userHeight||!wkg){el.innerHTML=`<div class="bmi-no-h">${!userHeight?'Legg inn høyde for å beregne BMI':'Ingen vektmåling'}<br><span style="color:var(--green);cursor:pointer;font-size:11px" onclick="openHeight()">✏️ ${!userHeight?'Legg inn høyde':'Legg til vekt'}</span></div>`;return;}
+  const h=userHeight/100,bmi=Math.round((wkg/(h*h))*10)/10,cat=getBmiCat(bmi);
+  const pct=Math.min(Math.max((bmi-16)/(40-16)*100,2),98);
+  const im=Math.round(18.5*h*h*10)/10,ix=Math.round(24.9*h*h*10)/10;
+  el.innerHTML=`<div class="bmi-top"><div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px">BMI</div><div class="bmi-val" style="color:${cat.color}">${bmi}</div><div class="bmi-cat" style="color:${cat.color}">${cat.e} ${cat.label}</div></div>
+    <div class="bmi-right"><div class="bmi-h-lbl">Høyde</div><div class="bmi-h-val">${userHeight} cm</div><span class="bmi-edit" onclick="openHeight()">✏️ Endre</span></div></div>
+    <div class="bmi-scale"><div class="bmi-marker" style="left:${pct}%"></div></div>
+    <div class="bmi-labels"><span>16</span><span>18.5</span><span>25</span><span>30</span><span>35</span><span>40</span></div>
+    <div style="font-size:10px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">Idealvekt for ${userHeight} cm: <strong style="color:var(--text)">${im}–${ix} kg</strong></div>`;
+}
+
+function drawGraph(){
+  const canvas=document.getElementById('w-canvas'),dpr=window.devicePixelRatio||1,cw=canvas.offsetWidth||280,ch=130;
+  canvas.width=cw*dpr;canvas.height=ch*dpr;
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,cw,ch);
+  if(weightLog.length<2){ctx.fillStyle='#555';ctx.font='11px DM Sans';ctx.textAlign='center';ctx.fillText('Legg til minst 2 målinger for graf',cw/2,ch/2);return;}
+  const sorted=[...weightLog].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const vals=sorted.map(e=>e.kg),minV=Math.min(...vals)-0.5,maxV=Math.max(...vals)+0.5;
+  const p={t:8,b:22,l:36,r:8},gw=cw-p.l-p.r,gh=ch-p.t-p.b;
+  const tx=i=>p.l+(i/(vals.length-1))*gw,ty=v=>p.t+gh-((v-minV)/(maxV-minV))*gh;
+  ctx.strokeStyle='#1e1e1e';ctx.lineWidth=1;
+  for(let i=0;i<=3;i++){const y=p.t+(gh/3)*i;ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(p.l+gw,y);ctx.stroke();}
+  const g=ctx.createLinearGradient(0,p.t,0,p.t+gh);g.addColorStop(0,'rgba(184,249,122,0.22)');g.addColorStop(1,'rgba(184,249,122,0)');
+  ctx.beginPath();ctx.moveTo(tx(0),ty(vals[0]));vals.forEach((v,i)=>{if(i>0)ctx.lineTo(tx(i),ty(v));});
+  ctx.lineTo(tx(vals.length-1),ch-p.b);ctx.lineTo(tx(0),ch-p.b);ctx.closePath();ctx.fillStyle=g;ctx.fill();
+  ctx.beginPath();ctx.moveTo(tx(0),ty(vals[0]));vals.forEach((v,i)=>{if(i>0)ctx.lineTo(tx(i),ty(v));});
+  ctx.strokeStyle='#b8f97a';ctx.lineWidth=2;ctx.stroke();
+  vals.forEach((v,i)=>{ctx.beginPath();ctx.arc(tx(i),ty(v),3,0,Math.PI*2);ctx.fillStyle='#b8f97a';ctx.fill();});
+  ctx.fillStyle='#555';ctx.font='10px DM Sans';ctx.textAlign='right';
+  ctx.fillText(maxV.toFixed(1),p.l-2,p.t+5);ctx.fillText(minV.toFixed(1),p.l-2,p.t+gh);
+  ctx.textAlign='center';const step=Math.max(1,Math.ceil(sorted.length/4));
+  sorted.forEach((e,i)=>{if(i%step===0||i===sorted.length-1)ctx.fillText(fmtDate(e.date),tx(i),ch-5);});
+}
+
+// ============================================================
+// EMOJI HELPER
+// ============================================================
+function getEmoji(name){
+  const n=(name||'').toLowerCase();
+  if(n.includes('kylling')||n.includes('biff')||n.includes('kjøtt')||n.includes('lam')||n.includes('svin'))return'🥩';
+  if(n.includes('laks')||n.includes('fisk')||n.includes('tun')||n.includes('reke')||n.includes('torsk'))return'🐟';
+  if(n.includes('egg'))return'🥚';
+  if(n.includes('brød')||n.includes('havr')||n.includes('pasta')||n.includes('ris')||n.includes('korn'))return'🍞';
+  if(n.includes('melk')||n.includes('yoghurt')||n.includes('ost')||n.includes('cottage')||n.includes('skyr'))return'🥛';
+  if(n.includes('banan')||n.includes('eple')||n.includes('appelsin')||n.includes('frukt'))return'🍎';
+  if(n.includes('brocc')||n.includes('spinat')||n.includes('tomat')||n.includes('salat')||n.includes('grønns'))return'🥦';
+  if(n.includes('olje')||n.includes('smør')||n.includes('avokado'))return'🫒';
+  if(n.includes('protein')||n.includes('bar'))return'💪';
+  if(n.includes('potet')||n.includes('søt'))return'🥔';
+  if(n.includes('sushi')||n.includes('ramen'))return'🍜';
+  if(n.includes('pizza'))return'🍕';
+  if(n.includes('burger'))return'🍔';
+  if(n.includes('is')||n.includes('dessert')||n.includes('kake'))return'🍰';
+  if(n.includes('kaffe'))return'☕';
+  if(n.includes('vann'))return'💧';
+  if(n.includes('cola')||n.includes('brus')||n.includes('saft'))return'🥤';
+  if(n.includes('vin'))return'🍷';
+  if(n.includes('øl'))return'🍺';
+  return'🍽️';
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function openExport(){document.getElementById('export-modal').classList.add('active');}
+function exportJSON(){
+  const data={eksportert:new Date().toISOString(),kalorimaal:kcalGoal,vannmaal:waterGoal,maalvekt:weightGoal||null,matlogg:log,drikkelogg:drinkLog,vektlogg:weightLog};
+  dl(JSON.stringify(data,null,2),`matlogg_${toIso(todayDate)}.json`,'application/json');
+  document.getElementById('export-modal').classList.remove('active');
+}
+function exportCSV(){
+  let csv='Dato,Tid,Måltid,Matvare,Gram,Kalorier,Protein,Karbo,Fett,Fiber\n';
+  log.forEach(e=>{csv+=`${e.date},${e.time||''},${MEALS[e.meal]?.label||e.meal},"${e.name}",${e.grams||0},${e.kcal},${e.protein||0},${e.carbs||0},${e.fat||0},${e.fiber||0}\n`;});
+  csv+='\nDato,Tid,Drikke,ml,kcal\n';
+  drinkLog.forEach(e=>{csv+=`${e.date},${e.time||''},"${e.name}",${e.ml},${e.kcal||0}\n`;});
+  csv+='\nDato,Tid,Vekt (kg)\n';
+  weightLog.forEach(e=>{csv+=`${e.date},${e.time},${e.kg}\n`;});
+  dl(csv,`matlogg_${toIso(todayDate)}.csv`,'text/csv');
+  document.getElementById('export-modal').classList.remove('active');
+}
+function exportText(){
+  const today=toIso(todayDate),tl=log.filter(e=>e.date===today),tdl=drinkLog.filter(e=>e.date===today);
+  const tot=tl.reduce((s,e)=>s+e.kcal,0),totV=tdl.reduce((s,e)=>s+(e.ml||0),0);
+  let txt=`📊 MATLOGG – ${new Date().toLocaleDateString('no-NO')}\n\n`;
+  txt+=`🍽 I DAG: ${tot} / ${kcalGoal} kcal\n💧 Vann: ${totV} / ${waterGoal} ml\n`;
+  Object.entries(MEALS).forEach(([k,m])=>{const items=tl.filter(e=>e.meal===k);if(!items.length)return;txt+=`\n${m.icon} ${m.label}:\n`;items.forEach(e=>{txt+=`  • ${e.name} – ${e.kcal} kcal\n`;});});
+  if(tdl.length){txt+='\n💧 Drikke:\n';tdl.forEach(e=>{txt+=`  • ${e.name} – ${e.ml}ml\n`;});}
+  const lw=weightLog.length?[...weightLog].sort((a,b)=>new Date(b.date)-new Date(a.date))[0]:null;
+  if(lw)txt+=`\n⚖️ Siste vekt: ${lw.kg} kg`;
+  try{navigator.clipboard.writeText(txt).then(()=>showToast('✅ Kopiert!'));}
+  catch{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast('✅ Kopiert!');}
+  document.getElementById('export-modal').classList.remove('active');
+}
+function dl(content,name,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2400);}
+window.addEventListener('resize',()=>{if(currentTab==='vekt')setTimeout(drawGraph,50);});
+</script>
+</body>
+</html>
